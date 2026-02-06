@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kisah Wang Lin - Formasi Lima Elemen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        .story-text p {
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        /* Styling untuk Range Slider (Playhead) */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+
+    <!-- Sticky Header for Audio Controls -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm transition-all duration-300">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex flex-col gap-3">
+            
+            <!-- Top Row: Title & Basic Tools -->
+            <div class="flex items-center justify-between gap-4">
+                <h1 id="story-title" class="text-lg font-bold text-slate-900 truncate flex-1">Formasi Lima Elemen</h1>
+                
+                <div class="flex items-center gap-2">
+                     <!-- Edit Button -->
+                    <button onclick="toggleEdit()" class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-full transition-all" title="Ubah Cerita">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Audio Controls -->
+            <div class="flex flex-col sm:flex-row items-center gap-3 w-full bg-slate-50 p-3 rounded-xl border border-slate-100">
+                
+                <!-- Play/Pause Controls -->
+                <div class="flex items-center gap-2">
+                    <button onclick="playOrPause()" id="mainPlayBtn" class="flex items-center justify-center w-10 h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-colors shadow-md">
+                        <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        </svg>
+                        <svg id="icon-pause" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6" />
+                        </svg>
+                    </button>
+
+                    <button onclick="stopAudio()" class="p-2 text-slate-400 hover:text-red-500 rounded-full transition-colors" title="Berhenti">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Progress Bar & Speed -->
+                <div class="flex-1 w-full flex items-center gap-3">
+                    <!-- Progress Slider -->
+                    <div class="relative w-full group">
+                        <input type="range" id="progressBar" min="0" max="100" value="0" step="0.1" 
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                               oninput="handleSeek(this.value)" 
+                               onchange="commitSeek(this.value)">
+                         <div class="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
+                            <span id="currentTimeDisplay">0%</span>
+                            <span>Selesai</span>
+                         </div>
+                    </div>
+
+                    <!-- Settings (Speed & Voice) -->
+                    <div class="flex items-center gap-2 border-l border-slate-200 pl-2">
+                        <!-- Speed Select -->
+                        <div class="relative">
+                            <select id="speedSelect" onchange="changeSpeed()" class="appearance-none bg-white text-xs font-medium text-slate-600 border border-slate-200 rounded-md py-1 pl-2 pr-6 hover:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
+                                <option value="0.5">0.5x</option>
+                                <option value="0.75">0.75x</option>
+                                <option value="1" selected>1.0x</option>
+                                <option value="1.25">1.25x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2">2.0x</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-slate-500">
+                                <svg class="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
+                        </div>
+
+                        <!-- Voice Select (Compact) -->
+                         <div class="relative max-w-[100px] sm:max-w-[140px]">
+                            <select id="voiceSelect" onchange="restartIfPlaying()" class="w-full appearance-none bg-white text-xs text-slate-600 border border-slate-200 rounded-md py-1 pl-2 pr-6 truncate hover:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
+                                <option value="" disabled selected>Suara...</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-slate-500">
+                                <svg class="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Edit Form (Hidden by default) -->
+    <div id="edit-panel" class="hidden fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800">Ubah Cerita</h3>
+                <button onclick="toggleEdit()" class="text-slate-400 hover:text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Judul Cerita</label>
+                    <input type="text" id="inputTitle" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" placeholder="Masukkan judul...">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Isi Cerita</label>
+                    <textarea id="inputText" rows="12" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-mono text-sm" placeholder="Tempel atau ketik cerita Anda di sini... (Setiap baris baru akan menjadi paragraf)"></textarea>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                <button onclick="toggleEdit()" class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors font-medium">Batal</button>
+                <button onclick="saveStory()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-sm transition-colors font-medium flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Simpan & Terapkan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-3xl mx-auto px-6 py-4 pb-20">
+        <article id="story-content" class="story-text text-lg text-slate-700">
+            <p>Di dalam lima cincin berpotongan, adegan itu kabur sepenuhnya. Sangat sulit untuk melihat ke dalam dari luar. Orang hanya bisa melihat riak terdistorsi yang berasal dari lima cincin.</p>
+            
+            <p>Wang Lin jauh di dalam lima cincin ini, dan dia sangat tenang. Di tangan kanannya ada tumpukan kecil tanah yang bergerak. Itu terus berubah menjadi berbagai bentuk yang berbeda.</p>
+            
+            <p>Itu mencoba melepaskan tangan Wang Lin, tetapi pada akhirnya, Wang Lin mengepalkan tangannya. Segelintir tanah runtuh dan tidak bisa direformasi. Itu menghilang dari telapak tangan Wang Lin.</p>
+            
+            <p>Kotoran dibentuk oleh elemen bumi dan berisi jejak esensi bumi. Sekarang setelah Wang Lin menyimpannya, ada dua tumpukan tanah di ruang penyimpanannya. Yang lain telah diberikan kepadanya oleh All-Seer!</p>
+            
+            <p>"Layak menjadi dari Benua Astral Abadi untuk menempatkan roh bumi di dalam formasi ini. Setelah puluhan ribu tahun, roh itu mungkin telah tumbuh menjadi tubuh roh bumi langkah ketiga!" Mata Wang Lin bersinar dan dia melihat Formasi Lima Elemen dengan gairah di matanya.</p>
+            
+            <p>Wang Lin menjadi sangat tertarik dengan formasi ini.</p>
+            
+            <p>"Aku memiliki esensi api di antara lima elemen. Jika aku bisa mendapatkan empat lainnya, tingkat kultivasi aku akan sangat meningkat. Jika kelima elemen bergabung menjadi satu, aku bertanya-tanya apakah itu akan melahirkan esensi baru!" Wang Lin tersenyum sambil melihat sekeliling pada Formasi Lima Elemen. Senyumnya menjadi lebih cerah.</p>
+            
+            <p>Wang Lin tidak akan berbicara tentang moral dengan musuh, terutama dengan orang-orang yang tidak berasal dari dunia gua. Kekuatan adalah segalanya! Jika pihak lain memiliki kekuatan untuk menahan Wang Lin di sini, dia akan menyerah. Jika tidak, maka orang-orang ini hanyalah perampok untuk Wang Lin. Wang Lin akan menjadi lebih kejam terhadap perampok!</p>
+            
+            <p>Setelah mengambil roh bumi, Wang Lin melangkah maju. Setelah langkah ini, apa yang muncul sebelum Wang Lin adalah dunia api.</p>
+            
+            <p>Lautan api ini memenuhi seluruh dunia. Wang Lin melihat bahwa langit berwarna merah dan bumi berwarna merah, dan semua merah ini adalah api. Langit terbakar dan bumi juga terbakar. Visinya terdistorsi karena riak-riak yang diciptakan oleh panas yang mengerikan.</p>
+            
+            <p>Tidak ada tanda-tanda kehidupan dalam panas ini, hanya api! Api mengerikan meraung dan mengeluarkan suara letupan yang masuk Telinga Wang Lin. Namun, ini tidak berpengaruh pada Wang Lin. Sebenarnya, Wang Lin merasa lebih nyaman di sini daripada di luar.</p>
+            
+            <p>Di planet Five Elements, di lantai tengah, pria berjubah hitam dan kelompok empat pria paruh baya itu baru saja berhasil menekan kengeriannya dalam hati mereka. Mereka menatap cermin dan melihat Wang Lin di dalam api.</p>
+            
+            <p>"Meskipun kekuatan roh api mirip dengan roh bumi, api itu sendiri memiliki kekuatan untuk membakar tubuh dan jiwa. Meskipun Wang Lin ini telah mengambil roh bumi, dia benar-benar tidak akan memiliki waktu yang mudah dengan formasi api!" Pria tua berjubah hitam itu secara alami tidak tahu tentang esensi api Wang Lin. Dia sepertinya berbicara dengan tiga orang di sekitarnya atau bergumam pada dirinya sendiri.</p>
+            
+            <p>Sebenarnya, bukan kesalahan mereka bahwa mereka tidak tahu apa-apa. Planet Lima Elemen telah ditutup dari luar untuk waktu yang lama. Bahkan tingkat identitas dan kultivasi Wang Lin hanya diketahui karena para Kultivator Realm Luar yang secara tidak sengaja menerobos masuk.</p>
+            
+            <p>Mereka tidak cukup tahu dan hanya mengirim beberapa orang setelah fakta untuk menyelidiki sedikit lebih. Mereka telah belajar lebih banyak, tetapi mereka tidak tahu tentang esensi Wang Lin.</p>
+            
+            <p>"Itu benar, roh bumi lebih lembut dan tidak seterang roh api. aku yakin dia akan terluka oleh roh api!" Mata wanita paruh baya itu ganas. Dia membenci Situ Nan dan membenci siapa pun yang mengenal Situ Nan.</p>
+            
+            <p>Dua orang lainnya diam-diam merenung. Mereka menatap cermin dengan ketakutan di mata mereka. Keduanya masih rasional dan tidak lagi berani berbicara.</p>
+            
+            <p>Di dalam formasi api, api berkobar. Saat Wang Lin masuk, lautan api meraung dan gelombang api melaju ke arahnya.</p>
+            
+            <p>Ini mendekatinya dalam sekejap dan sembilan qilins api muncul. Qilin api ini tingginya ribuan kaki dan terbuat dari api. Ada juga beberapa bola api di bawah kaki mereka.</p>
+            
+            <p>Sembilan qilins ini memiliki ekspresi yang sengit dan bergegas ke Wang Lin dari sembilan arah yang berbeda. Ini adalah pemandangan yang mengejutkan! Ada juga gelombang api yang mengerikan di belakang sembilan qilins, membuat mereka terlihat lebih ganas!</p>
+            
+            <p>Setiap Kultivator di planet Five Elements mengungkapkan senyum kejam. Selain dari cermin yang pria tua berjubah hitam gunakan untuk menonton, ada juga pusaran di langit. Pusaran itu mengungkapkan segala sesuatu yang terjadi di dalam formasi.</p>
+            
+            <p>Tidaklah berlebihan untuk mengatakan bahwa Wang Lin dilihat oleh puluhan ribu. Semua Kultivator yang telah keluar dari menara menatapnya.</p>
+            
+            <p>Pria tua berjubah hitam itu mengepalkan tinjunya saat dia melihat cermin di depannya dan berkata, "Aku ingin melihat bagaimana dia akan menolak! Kali ini dia pasti akan terluka!"</p>
+            
+            <p>Namun, tepat pada saat ini, ekspresi pria tua itu sangat berubah. Pada saat yang sama, wanita paruh baya itu menjerit nyaring.</p>
+            
+            <p>"Tidak mungkin!! Hehe..."</p>
+            
+            <p>Tak lama setelah itu, semua Kultivator Gui Yi Sekte yang menonton pusaran di langit berseru dengan keras.</p>
+            
+            <p>Di dalam formasi api, Wang Lin dengan tenang melihat sembilan kobaran api pengisian ke arahnya. The qilins berhenti 100 kaki dari Wang Lin dengan keraguan di mata mereka, dan mereka segera mulai bergetar. Mereka berlutut di tanah dan mulai merintih.</p>
+            
+            <p>Mereka tidak lagi terlihat seperti qilins tetapi seperti anak kucing. Mereka bahkan tampak bahagia, seolah-olah mereka telah bertemu tuan mereka!</p>
+            
+            <p>Bahkan api di belakangnya dengan gembira berputar di sekitar Wang Lin. Seluruh formasi api mengeluarkan suara gemuruh saat Wang Lin melambaikan tangan kanannya.</p>
+            
+            <p>Gemuruh bergema dan semua api di dunia berkumpul seperti orang gila. Dalam sekejap, selain dari sembilan qilins dan Wang Lin, semua api berkumpul untuk membentuk raksasa puluhan ribu kaki sebelum Wang Lin!</p>
+            
+            <p>Raksasa ini mengenakan baju zirah yang terbuat dari api dan memiliki jubah api. Tubuhnya mengeluarkan perasaan kuat. Itu benar-benar terbuat dari api, bahkan rambutnya</p>
+            
+            <p>Setelah raksasa api itu muncul, ia berlutut ke arah Wang Lin dengan satu lutut dan tangan di dada. Wajah tanpa ekspresi menunjukkan rasa hormat yang sangat panas!</p>
+            
+            <p>"Apa yang terjadi... Roh api... Roh pertama sebenarnya berlutut di depannya!!!!" Pria tua berjubah hitam di menara menjadi pucat saat dia melihat semua ini, dan pikirannya menjadi kosong.</p>
+            
+            <p>Ada juga wanita paruh baya. Wajahnya langsung berubah pucat. Dia membuka mulutnya tetapi akhirnya tidak mengatakan apa-apa. Saat dia memandang Wang Lin melalui cermin, matanya sudah dipenuhi rasa takut yang tersisa.</p>
+            
+            <p>Keduanya bukan satu-satunya yang linglung. Semua Kultivator dari Gui Yi Sekte melihat pemandangan di depan mereka dan mati diam.</p>
+            
+            <p>Mereka terkejut ketika Wang Lin menangkap roh bumi, tetapi sekarang mereka melihat roh api benar-benar menyembahnya. Wang Lin bahkan tidak mengatakan sepatah kata pun sejak dia masuk, dia baru saja berdiri di sana. Dia berdiri di sana seperti raja yang baru saja kembali ke kerajaannya sendiri, dan hanya dengan tatapan, semua orang di tanah berlutut di depannya.</p>
+            
+            <p>Ini di luar imajinasi mereka dan di luar pemahaman mereka , menyebabkan rasa takut dan kegelisahan yang kuat.</p>
+            
+            <p>Na Duo dan pria paruh baya itu dengan tenang merenung di lantai 10. Kelopak mata Na Duo berkedut dan ekspresinya perlahan menjadi suram. Mereka saling memandang dan melihat ketakutan di mata satu sama lain.</p>
+            
+            <p>Orang lain mungkin tidak melihat masalah. tetapi mereka berdua bisa.</p>
+            
+            <p>Na Duo perlahan berkata, "Api esensi!"</p>
+            
+            <p>"Juga, itu sudah mencapai puncaknya, memungkinkan dia menjadi penguasa api! Kalau tidak, roh api tidak akan menyembahnya dan mengungkapkan tingkat penghormatan seperti itu!"</p>
+            
+            <p>"Formasi Lima Elemen tidak bisa menahannya..." "Namun, sepertinya dia tidak akan keluar sendiri. aku melihat bahwa tujuannya adalah untuk mengambil lima roh!!" Tatapan Na Duo menjadi dingin. "Kita harus memancingnya keluar. Kami tidak bisa kehilangan tiga roh lainnya!"</p>
+            
+            <p>Pria paruh baya itu menarik napas dalam-dalam dan berdiri. Dia melihat ke luar menara. "Aku memanggil baju zirah pertempuran leluhur!" Pria paruh baya itu meraung, kemudian sinar cahaya biru melesat keluar dari atas lantai 10. Cahaya mengembun di sekelilingnya dan membentuk baju besi biru air di sekelilingnya. "Formasi selanjutnya adalah formasi air. aku akan melihat apakah aku bisa memaksanya keluar dari formasi ke dalam Sembilan Siklus." Pria paruh baya mengangkat tangan kanannya dan meraih kekosongan. Air muncul dan membentuk tombak di tangannya. "Bantu aku menekan formasi, aku akan pergi dulu!" Pria paruh baya bersenjatakan tombak bergerak dan menghilang menjadi kabut uap air di lantai 10.</p>
+        </article>
+        
+        <div class="mt-8 pt-8 border-t border-slate-200 text-center text-sm text-slate-500">
+            <p>Akhir dari kutipan</p>
+        </div>
+    </main>
+
+    <script>
+        const synth = window.speechSynthesis;
+        let utterance = null;
+        let isPlaying = false;
+        let isPaused = false;
+        
+        // Tracking State
+        let fullText = "";
+        let globalCharOffset = 0; // Where we started speaking from
+        let textDurationEstimate = 0;
+
+        // Elements
+        const mainPlayBtn = document.getElementById('mainPlayBtn');
+        const iconPlay = document.getElementById('icon-play');
+        const iconPause = document.getElementById('icon-pause');
+        const storyContent = document.getElementById('story-content');
+        const storyTitle = document.getElementById('story-title');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const speedSelect = document.getElementById('speedSelect');
+        const progressBar = document.getElementById('progressBar');
+        const timeDisplay = document.getElementById('currentTimeDisplay');
+        
+        const editPanel = document.getElementById('edit-panel');
+        const inputTitle = document.getElementById('inputTitle');
+        const inputText = document.getElementById('inputText');
+
+        let voices = [];
+
+        // --- Core Audio Functions ---
+
+        function updateUIState(state) {
+            if (state === 'playing') {
+                isPlaying = true;
+                isPaused = false;
+                iconPlay.classList.add('hidden');
+                iconPause.classList.remove('hidden');
+                mainPlayBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                mainPlayBtn.classList.add('bg-slate-800', 'hover:bg-slate-900');
+            } else if (state === 'paused') {
+                isPlaying = false;
+                isPaused = true;
+                iconPlay.classList.remove('hidden');
+                iconPause.classList.add('hidden');
+                mainPlayBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                mainPlayBtn.classList.remove('bg-slate-800', 'hover:bg-slate-900');
+            } else {
+                // Stopped
+                isPlaying = false;
+                isPaused = false;
+                iconPlay.classList.remove('hidden');
+                iconPause.classList.add('hidden');
+                mainPlayBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                mainPlayBtn.classList.remove('bg-slate-800', 'hover:bg-slate-900');
+                progressBar.value = 0;
+                timeDisplay.innerText = "0%";
+                globalCharOffset = 0;
+            }
+        }
+
+        function playOrPause() {
+            if (isPlaying) {
+                pauseAudio();
+            } else {
+                if (isPaused) {
+                    resumeAudio();
+                } else {
+                    playAudioFrom(globalCharOffset);
+                }
+            }
+        }
+
+        function pauseAudio() {
+            if (synth.speaking) {
+                synth.pause();
+                updateUIState('paused');
+            }
+        }
+
+        function resumeAudio() {
+            if (synth.paused) {
+                synth.resume();
+                updateUIState('playing');
+            } else {
+                playAudioFrom(globalCharOffset);
+            }
+        }
+
+        function stopAudio() {
+            synth.cancel();
+            updateUIState('stopped');
+        }
+
+        function playAudioFrom(startIndex = 0) {
+            synth.cancel(); // Stop any current audio
+            
+            // Get text and slice it based on offset
+            fullText = storyContent.innerText;
+            const textToSpeak = fullText.substring(startIndex);
+            
+            if (!textToSpeak.trim()) {
+                updateUIState('stopped');
+                return;
+            }
+
+            utterance = new SpeechSynthesisUtterance(textToSpeak);
+            
+            // Voice Settings
+            const selectedOption = voiceSelect.selectedOptions[0];
+            if (selectedOption) {
+                const voiceName = selectedOption.getAttribute('data-name');
+                const voice = voices.find(v => v.name === voiceName);
+                if (voice) {
+                    utterance.voice = voice;
+                    utterance.lang = voice.lang;
+                }
+            } else {
+                utterance.lang = 'id-ID';
+            }
+
+            // Speed
+            utterance.rate = parseFloat(speedSelect.value);
+            utterance.pitch = 1.0;
+
+            // Events
+            utterance.onstart = () => {
+                updateUIState('playing');
+            };
+
+            utterance.onend = () => {
+                // Only reset if we naturally reached the end (not cancelled for seeking)
+                if (Math.ceil(progressBar.value) >= 99) {
+                     updateUIState('stopped');
+                }
+            };
+
+            utterance.onerror = (e) => {
+                console.error("Speech Error", e);
+                // Don't stop UI on 'interrupted' because seeking causes interruption
+                if (e.error !== 'interrupted' && e.error !== 'canceled') {
+                    updateUIState('stopped');
+                }
+            };
+
+            // Progress Logic
+            utterance.onboundary = (event) => {
+                if (event.name === 'word' || event.name === 'sentence') {
+                    // Current absolute index = offset where we started + current utterance progress
+                    const currentAbsIndex = startIndex + event.charIndex;
+                    const percentage = (currentAbsIndex / fullText.length) * 100;
+                    
+                    // Update slider visually (only if user is not currently dragging it)
+                    if (!isDraggingSlider) {
+                         progressBar.value = percentage;
+                         timeDisplay.innerText = Math.round(percentage) + "%";
+                         globalCharOffset = currentAbsIndex; // Update global tracker
+                    }
+                }
+            };
+
+            synth.speak(utterance);
+        }
+
+        function restartIfPlaying() {
+            if (isPlaying || isPaused) {
+                playAudioFrom(globalCharOffset);
+            }
+        }
+
+        // --- Seek / Slider Logic ---
+        
+        let isDraggingSlider = false;
+
+        function handleSeek(val) {
+            isDraggingSlider = true;
+            timeDisplay.innerText = Math.round(val) + "%";
+        }
+
+        function commitSeek(val) {
+            isDraggingSlider = false;
+            fullText = storyContent.innerText;
+            
+            // Calculate character index from percentage
+            const newIndex = Math.floor((val / 100) * fullText.length);
+            globalCharOffset = newIndex;
+            
+            playAudioFrom(newIndex);
+        }
+
+        function changeSpeed() {
+             restartIfPlaying();
+        }
+
+        // --- Editor Logic ---
+        
+        function toggleEdit() {
+            const isHidden = editPanel.classList.contains('hidden');
+            if (isHidden) {
+                inputTitle.value = storyTitle.innerText;
+                inputText.value = Array.from(storyContent.querySelectorAll('p'))
+                    .map(p => p.innerText)
+                    .join('\n\n');
+                editPanel.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                editPanel.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function saveStory() {
+            const newTitle = inputTitle.value.trim();
+            const newText = inputText.value.trim();
+
+            if (!newTitle || !newText) {
+                alert("Mohon isi judul dan konten cerita.");
+                return;
+            }
+
+            storyTitle.innerText = newTitle;
+            document.title = newTitle;
+
+            const paragraphs = newText.split(/\n\s*\n/);
+            storyContent.innerHTML = paragraphs
+                .map(text => text.trim())
+                .filter(text => text.length > 0)
+                .map(text => `<p>${text}</p>`)
+                .join('');
+
+            stopAudio();
+            toggleEdit();
+        }
+
+        // --- Initialization ---
+
+        function populateVoiceList() {
+            voices = synth.getVoices();
+            voiceSelect.innerHTML = '';
+
+            const idVoices = voices.filter(v => v.lang.includes('id') || v.lang.includes('ID'));
+            const list = idVoices.length > 0 ? idVoices : voices;
+
+            list.forEach((voice) => {
+                const option = document.createElement('option');
+                // Shorten name for mobile UI
+                let displayName = voice.name.replace('Google', '').replace('Microsoft', '').trim();
+                if(displayName.length > 15) displayName = displayName.substring(0, 15) + '...';
+                
+                option.textContent = displayName;
+                option.setAttribute('data-lang', voice.lang);
+                option.setAttribute('data-name', voice.name);
+                voiceSelect.appendChild(option);
+            });
+
+            // Auto-select Indonesian
+            const pref = list.find(v => v.lang.includes('id'));
+            if (pref) {
+                 for(let i=0; i<voiceSelect.options.length; i++) {
+                    if(voiceSelect.options[i].getAttribute('data-name') === pref.name) {
+                        voiceSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        populateVoiceList();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+        
+        window.onbeforeunload = () => synth.cancel();
+
+    </script>
+</body>
+</html>
